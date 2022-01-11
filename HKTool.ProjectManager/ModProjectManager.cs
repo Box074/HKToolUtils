@@ -337,6 +337,7 @@ namespace HKTool.ProjectManager
             DownloadDependenciesDefault();
             foreach (var v in Directory.EnumerateFiles(WebDependenciesPath, "*.dll", SearchOption.AllDirectories))
             {
+				if(ProjectData.IgnoreDlls.Contains(Path.GetFileName(v))) continue;
                 msprojBuilder.AppendLine($"<Reference Include=\"{Path.GetFileNameWithoutExtension(v)}\">");
                 msprojBuilder.AppendLine($"<HintPath>{v}</HintPath>");
                 msprojBuilder.AppendLine("</Reference>");
@@ -403,6 +404,7 @@ namespace HKTool.ProjectManager
             }
             foreach (var v in Directory.EnumerateFiles(ModdingAPIPath, "*.dll", SearchOption.AllDirectories))
             {
+				if(ProjectData.IgnoreDlls.Contains(Path.GetFileName(v))) continue;
                 try
                 {
                     metadataReference.Add(MetadataReference.CreateFromFile(v));

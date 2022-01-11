@@ -31,6 +31,7 @@ namespace HKTool.ProjectManager
         public string DefaultNamespace { get; set; } = "";
         public string DependenciesDir { get; set; } = @".\Dependencies\";
         public string ModdingAPIVersion { get; set; } = "1.5.78.11833-67";
+		public List<string> IgnoreDlls { get; set; } = new List<string>();
         public List<string> WebDependencies { get; set; } = new List<string>();
     }
 }
