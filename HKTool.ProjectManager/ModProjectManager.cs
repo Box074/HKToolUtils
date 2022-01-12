@@ -355,7 +355,7 @@ namespace HKTool.ProjectManager
                     msprojBuilder.AppendLine($"<Compile Include=\"{v.FullName}\" />");
                 }
             }*/
-            msprojBuilder.AppendLine($"<Compile Include=\"{CodePath}\\*.cs\" />");
+            msprojBuilder.AppendLine($"<Compile Include=\"{CodePath}\\**\\*.cs\" />");
             #endregion
             #region EmbeddedResource
             foreach (var v in ProjectData.EmbeddedResource)
@@ -392,6 +392,7 @@ namespace HKTool.ProjectManager
                 .Concat(Directory.EnumerateFiles(DependenciesPath, "*.dll", SearchOption.AllDirectories))
                 )
             {
+                if(ProjectData.IgnoreDlls.Contains(Path.GetFileName(v))) continue;
                 try
                 {
                     metadataReference.Add(MetadataReference.CreateFromFile(v));
