@@ -299,32 +299,15 @@ namespace HKTool.ProjectManager
             string msprojName = $"{ProjectData.ProjectName}.csproj";
             string msprojPath = Path.Combine(ProjectBaseDirectory, msprojName);
             StringBuilder msprojBuilder = new StringBuilder();
-            msprojBuilder.Append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-                "<Project ToolsVersion=\"15.0\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\n" +
-                "<Import Project=\"$(MSBuildExtensionsPath)\\$(MSBuildToolsVersion)\\Microsoft.Common.props\" Condition=\"Exists('$(MSBuildExtensionsPath)\\$(MSBuildToolsVersion)\\Microsoft.Common.props')\" />\n" +
+            msprojBuilder.Append("<Project Sdk=\"Microsoft.NET.Sdk.WindowsDesktop\">\n" +
                 "<PropertyGroup>\n" +
-                "<Configuration Condition=\" '$(Configuration)' == '' \">Debug</Configuration>\n" +
-                "<Platform Condition=\" '$(Platform)' == '' \">AnyCPU</Platform>\n" +
-                $"<ProjectGuid>{msprojGuid}</ProjectGuid>\n" +
-                "<OutputType>Library</OutputType>\n" +
-                "<AppDesignerFolder>Properties</AppDesignerFolder>\n" +
-                $"<RootNamespace>{ProjectData.DefaultNamespace}</RootNamespace>\n" +
-                $"<AssemblyName>{ProjectData.ProjectName}</AssemblyName>\n" +
-                $"<TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>\n" +
-                $"<FileAlignment>512</FileAlignment>\n" +
-                $"<LangVersion>{ProjectData.CSharpVersion}</LangVersion>\n" +
-                $"<Deterministic>true</Deterministic>\n" +
-                $"</PropertyGroup>\n" +
-                $"<PropertyGroup Condition=\" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' \">\n" +
-                $"<DebugSymbols>true</DebugSymbols>\n" +
-                $"<DebugType>full</DebugType>\n" +
-                $"<Optimize>false</Optimize>\n" +
-                $"<OutputPath>bin\\Debug\\</OutputPath>\n" +
-                $"<DefineConstants>DEBUG;TRACE</DefineConstants>\n" +
-                $"<ErrorReport>prompt</ErrorReport>\n" +
-                $"<WarningLevel>4</WarningLevel>\n" +
-                $"</PropertyGroup>\n" +
-                $"<ItemGroup>\n");
+                "<LangVersion>preview</LangVersion>\n" +
+                "<TargetFramework>net472</TargetFramework>\n" +
+                "<GenerateAssemblyInfo>false</GenerateAssemblyInfo>\n" +
+                "<EnableDefaultItems>false</EnableDefaultItems>\n" +
+                "<EnableDefaultCompileItems>false</EnableDefaultCompileItems>\n" +
+                "</PropertyGroup>\n" +
+                "<ItemGroup>\n");
             #region Reference
             DownloadModdingAPI();
             foreach (var v in Directory.EnumerateFiles(ModdingAPIPath, "*.dll", SearchOption.AllDirectories))
@@ -368,7 +351,6 @@ namespace HKTool.ProjectManager
             }
             #endregion
             msprojBuilder.AppendLine("</ItemGroup>");
-            msprojBuilder.AppendLine("<Import Project=\"$(MSBuildToolsPath)\\Microsoft.CSharp.targets\" />");
             msprojBuilder.AppendLine("</Project>");
 
             File.WriteAllText(msprojPath, msprojBuilder.ToString(), Encoding.UTF8);
