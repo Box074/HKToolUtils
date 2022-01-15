@@ -355,5 +355,3 @@ MigrationBackup/
 #Output
 /Output/
 
-#Cache
-/WebDependenciesCache.json

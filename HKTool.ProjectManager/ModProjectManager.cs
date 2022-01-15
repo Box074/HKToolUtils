@@ -299,7 +299,7 @@ namespace HKTool.ProjectManager
             string msprojName = $"{ProjectData.ProjectName}.csproj";
             string msprojPath = Path.Combine(ProjectBaseDirectory, msprojName);
             StringBuilder msprojBuilder = new StringBuilder();
-            msprojBuilder.Append("<Project Sdk=\"Microsoft.NET.Sdk.WindowsDesktop\">\n" +
+            msprojBuilder.Append("<Project Sdk=\"Microsoft.NET.Sdk\">\n" +
                 "<PropertyGroup>\n" +
                 "<LangVersion>preview</LangVersion>\n" +
                 "<TargetFramework>net472</TargetFramework>\n" +
