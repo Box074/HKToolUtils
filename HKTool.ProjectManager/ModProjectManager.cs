@@ -306,6 +306,7 @@ namespace HKTool.ProjectManager
                 "<GenerateAssemblyInfo>false</GenerateAssemblyInfo>\n" +
                 "<EnableDefaultItems>false</EnableDefaultItems>\n" +
                 "<EnableDefaultCompileItems>false</EnableDefaultCompileItems>\n" +
+                "<AllowUnsafeBlocks>true</AllowUnsafeBlocks>" +
                 "</PropertyGroup>\n" +
                 "<ItemGroup>\n");
             #region Reference
@@ -325,7 +326,13 @@ namespace HKTool.ProjectManager
                 msprojBuilder.AppendLine($"<HintPath>{v}</HintPath>");
                 msprojBuilder.AppendLine("</Reference>");
             }
-            foreach (var v in Directory.GetFiles(DependenciesPath, "*.dll", SearchOption.AllDirectories)) ;
+            foreach (var v in Directory.GetFiles(DependenciesPath, "*.dll", SearchOption.AllDirectories))
+            {
+                if (ProjectData.IgnoreDlls.Contains(Path.GetFileName(v))) continue;
+                msprojBuilder.AppendLine($"<Reference Include=\"{Path.GetFileNameWithoutExtension(v)}\">");
+                msprojBuilder.AppendLine($"<HintPath>{v}</HintPath>");
+                msprojBuilder.AppendLine("</Reference>");
+            }
             #endregion
             #region CompileFiles
             /*var codeDir = new DirectoryInfo(CodePath);
@@ -400,6 +407,10 @@ namespace HKTool.ProjectManager
             var syntaxTree = new List<SyntaxTree>();
             syntaxTree.Add(CSharpSyntaxTree.ParseText($"[assembly: System.Runtime.InteropServices.Guid(\"{ProjectData.Guid}\")]\n" +
                 $"[assembly: System.Reflection.AssemblyVersion(\"{ProjectData.ModVersion}\")]\n"));
+            if(ProjectData.UseGZip)
+            {
+                syntaxTree.Add(CSharpSyntaxTree.ParseText($"[assembly: HKTool.Attributes.EmbeddedResourceCompressionAttribute]"));
+            }
             foreach (var v in Directory.EnumerateFiles(CodePath, "*.cs", SearchOption.AllDirectories))
             {
                 try
@@ -420,7 +431,18 @@ namespace HKTool.ProjectManager
                 var fp = Path.Combine(EmbeddedResourcePath, v.Key);
                 if (File.Exists(fp))
                 {
-                    var r0 = new ResourceDescription(v.Value, () => File.OpenRead(fp), true);
+                    Stream s = File.OpenRead(fp);
+                    if(ProjectData.UseGZip)
+                    {
+                        var ms = new MemoryStream();
+                        using(var gzip = new GZipStream(ms, CompressionLevel.Optimal, true))
+                        {
+                            s.CopyTo(gzip);
+                        }
+                        ms.Position = 0;
+                        s = ms;
+                    }
+                    var r0 = new ResourceDescription(v.Value, () => s, true);
                     ers.Add(r0);
                 }
             }
