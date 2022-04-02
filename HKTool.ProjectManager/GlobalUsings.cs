@@ -1,0 +1,22 @@
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Text;
+global using System.Reflection;
+global using System.Runtime.CompilerServices;
+global using System.IO;
+global using System.IO.Compression;
+global using System.Diagnostics;
+global using System.Security.Cryptography;
+global using System.Net;
+global using System.Net.Http;
+global using System.Threading.Tasks;
+global using Newtonsoft.Json;
+global using Newtonsoft;
+global using Microsoft.CSharp;
+global using Microsoft;
+global using Microsoft.CodeAnalysis.CSharp;
+global using Microsoft.CodeAnalysis;
+
+global using Mono.Cecil;
+global using Mono.Cecil.Cil;

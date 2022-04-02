@@ -18,6 +18,7 @@ namespace HKToolUtils
         {
             if (args.Length < 2) return;
             var cmd = args[0];
+            bool result = false;
             if (cmd.Equals("NewProject", StringComparison.OrdinalIgnoreCase) && args.Length == 3)
             {
                 using (var gitignoreS = new StreamReader(
@@ -27,22 +28,38 @@ namespace HKToolUtils
                 }
                 var name = args[2];
                 var p = ModProjectFactory.CreateModProject(name, Path.GetFullPath(args[1]));
-                p.CreateMSProject();
-            }else if(cmd.Equals("RefreshMSProject", StringComparison.OrdinalIgnoreCase))
+                result = true;
+                //p.CreateMSProject();
+            }
+            else if(cmd.Equals("RefreshMSProject", StringComparison.OrdinalIgnoreCase))
             {
                 var p = ModProjectFactory.OpenModProject(Path.GetFullPath(args[1]));
                 p.CreateMSProject();
-            }else if(cmd.Equals("Build", StringComparison.OrdinalIgnoreCase))
+                result = true;
+            }
+            else if(cmd.Equals("Build", StringComparison.OrdinalIgnoreCase))
             {
                 var p = ModProjectFactory.OpenModProject(Path.GetFullPath(args[1]));
-                p.Build();
+                result = p.Build();
+            }
+            else if (cmd.Equals("BuildInGithub", StringComparison.OrdinalIgnoreCase))
+            {
+                var p = ModProjectFactory.OpenModProject(Path.GetFullPath(args[1]));
+                p.BuildInGithub = true;
+                result = p.Build();
             }
             else if (cmd.Equals("DownloadDependencies", StringComparison.OrdinalIgnoreCase))
             {
                 var p = ModProjectFactory.OpenModProject(Path.GetFullPath(args[1]));
-                p.DownloadDependenciesDefault(true);
-                p.DownloadModdingAPI(true);
+                result = p.DownloadDependenciesDefault(true) && p.DownloadModdingAPI(true);
             }
+            else if(cmd.Equals("DownloadMAPI", StringComparison.OrdinalIgnoreCase))
+            {
+                var p = ModProjectFactory.OpenModProject(Path.GetFullPath(args[1]));
+                result = p.DownloadModdingAPI(true);
+            }
+            if(!result) Environment.Exit(-1);
+            Environment.Exit(0);
         }
     }
 }
