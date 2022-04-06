@@ -195,7 +195,7 @@ public class ModProjectManager
     {
         var info = ModdingAPIInfo;
         var r = DownloadDependencies(forceDownload, new string[]{
-                @"https://github.com/HKLab/HollowKnightMod.Tool/releases/latest/download/HKTool.dll",
+                @"https://github.com/HKLab/HollowKnightMod.Tool/releases/latest/download/HKTool.zip",
                 @"https://github.com/HKLab/HKToolLibraries/archive/refs/heads/master.zip",
                 (string.IsNullOrEmpty(ProjectData.ModdingAPIVersion) || ProjectData.UseCommonLibrary) ?
                     @"https://github.com/hk-modding/api/releases/latest/download/ModdingApiWin.zip" :

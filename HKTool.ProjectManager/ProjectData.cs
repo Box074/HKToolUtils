@@ -30,7 +30,7 @@ public class ProjectData
     public List<string> WebDependencies { get; set; } = new List<string>();
     public bool UseGZip { get; set; } = true;
     public bool UseCommonLibrary { get; set; } = true;
-    public bool CreateZip { get; set; } = false;
+    public bool CreateZip { get; set; } = true;
     public Dictionary<string, string> ZipFiles { get; set; } = new Dictionary<string, string>();
     public bool EnableNullable { get; set; } = true;
 }
