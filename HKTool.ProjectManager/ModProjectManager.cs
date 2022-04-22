@@ -2,7 +2,7 @@
 
 namespace HKTool.ProjectManager;
 
-public class ModProjectManager
+public partial class ModProjectManager
 {
     private static string _slnTemplate = null;
     private static readonly MD5 md5 = MD5.Create();
@@ -296,8 +296,8 @@ public class ModProjectManager
             "<GenerateAssemblyInfo>false</GenerateAssemblyInfo>\n" +
             "<EnableDefaultItems>false</EnableDefaultItems>\n" +
             "<EnableDefaultCompileItems>false</EnableDefaultCompileItems>\n" +
-            "<AllowUnsafeBlocks>true</AllowUnsafeBlocks>" +
-            $"<Nullable>{(ProjectData.EnableNullable ? "enable" : "disable")}</Nullable>" +
+            "<AllowUnsafeBlocks>true</AllowUnsafeBlocks>\n" +
+            $"<Nullable>{(ProjectData.EnableNullable ? "enable" : "disable")}</Nullable>\n" +
             "</PropertyGroup>\n" +
             "<ItemGroup>\n");
         #region Reference
@@ -360,162 +360,6 @@ public class ModProjectManager
             File.WriteAllText(slnPath, string.Format(SlnTemplate, ProjectData.ProjectName, ProjectData.Guid));
         }
     }
-    public bool Build()
-    {
-        if (!DownloadDependenciesDefault() || !DownloadModdingAPI())
-        {
-            return false;
-        }
-
-        var metadataReference = new List<MetadataReference>();
-        foreach (var v in Directory.EnumerateFiles(WebDependenciesPath, "*.dll", SearchOption.AllDirectories)
-            .Concat(Directory.EnumerateFiles(DependenciesPath, "*.dll", SearchOption.AllDirectories))
-            )
-        {
-            if (ProjectData.IgnoreDlls.Contains(Path.GetFileName(v))) continue;
-            try
-            {
-                metadataReference.Add(MetadataReference.CreateFromFile(v));
-                File.Copy(v, Path.Combine(OutputPath, Path.GetFileName(v)), true);
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine(e);
-            }
-        }
-        foreach (var v in Directory.EnumerateFiles(ModdingAPIPath, "*.dll", SearchOption.AllDirectories))
-        {
-            if (ProjectData.IgnoreDlls.Contains(Path.GetFileName(v))) continue;
-            try
-            {
-                metadataReference.Add(MetadataReference.CreateFromFile(v));
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine(e);
-            }
-        }
-        var syntaxTree = new List<SyntaxTree>();
-        syntaxTree.Add(CSharpSyntaxTree.ParseText($"[assembly: System.Runtime.InteropServices.Guid(\"{ProjectData.Guid}\")]\n" +
-            $"[assembly: System.Reflection.AssemblyVersion(\"{ProjectData.ModVersion}\")]\n"));
-        if (ProjectData.UseGZip)
-        {
-            syntaxTree.Add(CSharpSyntaxTree.ParseText($"[assembly: HKTool.Attributes.EmbeddedResourceCompressionAttribute]"));
-        }
-        foreach (var v in Directory.EnumerateFiles(CodePath, "*.cs", SearchOption.AllDirectories))
-        {
-            try
-            {
-                syntaxTree.Add(CSharpSyntaxTree.ParseText(
-                    File.ReadAllText(v), CSharpParseOptions.Default, v, Encoding.UTF8, default
-                    ));
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine(e);
-            }
-        }
-
-        List<ResourceDescription> ers = new List<ResourceDescription>();
-        foreach (var v in ProjectData.EmbeddedResource)
-        {
-            var fp = Path.Combine(EmbeddedResourcePath, v.Key);
-            if (File.Exists(fp))
-            {
-                Stream s = File.OpenRead(fp);
-                if (ProjectData.UseGZip)
-                {
-                    var ms = new MemoryStream();
-                    using (var gzip = new GZipStream(ms, CompressionLevel.Optimal, true))
-                    {
-                        s.CopyTo(gzip);
-                    }
-                    ms.Position = 0;
-                    s = ms;
-                }
-                var r0 = new ResourceDescription(v.Value, () => s, true);
-                ers.Add(r0);
-            }
-        }
-        var r = CSharpCompilation.Create(ProjectData.ProjectName)
-            .WithOptions(new CSharpCompilationOptions(
-            OutputKind.DynamicallyLinkedLibrary,
-            true, ProjectData.ProjectName, null, null,
-            null, OptimizationLevel.Release, true, true, null, null, default, null,
-            Platform.AnyCpu, ReportDiagnostic.Warn, 4, null, true, false, null,
-            null
-            )
-            .WithAllowUnsafe(true)
-            .WithNullableContextOptions(ProjectData.EnableNullable ? NullableContextOptions.Enable : NullableContextOptions.Disable)
-            ).AddSyntaxTrees(syntaxTree)
-            .AddReferences(metadataReference)
-            .Emit(Path.Combine(OutputPath, $"{ProjectData.ProjectName}.dll"),
-            Path.Combine(OutputPath, $"{ProjectData.ProjectName}.pdb"),
-            Path.Combine(OutputPath, $"{ProjectData.ProjectName}.xml"),
-            null, ers, default);
-        if (!r.Success)
-        {
-            foreach (var v in r.Diagnostics)
-            {
-                if (v.Id == "CS8019" || v.Id == "CS1701") continue;
-                switch (v.Severity)
-                {
-                    case DiagnosticSeverity.Error:
-                        Console.Error.WriteLine(v.ToString());
-                        break;
-                    case DiagnosticSeverity.Warning:
-                    case DiagnosticSeverity.Info:
-                        Console.WriteLine(v.ToString());
-                        break;
-                }
-            }
-            Console.Error.WriteLine("Failed!");
-            return false;
-        }
-        else
-        {
-            if (!BuildInGithub)
-            {
-                foreach (var v in r.Diagnostics)
-                {
-                    if (v.Id == "CS8019" || v.Id == "CS1701") continue;
-                    switch (v.Severity)
-                    {
-                        case DiagnosticSeverity.Error:
-                            Console.Error.WriteLine(v.ToString());
-                            break;
-                        case DiagnosticSeverity.Warning:
-                        case DiagnosticSeverity.Info:
-                            Console.WriteLine(v.ToString());
-                            break;
-                    }
-                }
-            }
-            
-            Console.WriteLine(
-                "SHA256(" + $"{ProjectData.ProjectName}.dll): " +
-                BitConverter.ToString(SHA256.HashData(File.ReadAllBytes(Path.Combine(OutputPath, $"{ProjectData.ProjectName}.dll"))))
-                .Replace("-", "").ToLower());
-            if(ProjectData.CreateZip)
-            {
-                using (Stream stream = File.OpenWrite(Path.Combine(OutputPath, $"{ProjectData.ProjectName}.zip")))
-                using (var zip = new ZipArchive(stream, ZipArchiveMode.Create))
-                {
-                    zip.CreateEntryFromFile(Path.Combine(OutputPath, $"{ProjectData.ProjectName}.dll"), $"{ProjectData.ProjectName}.dll");
-                    zip.CreateEntryFromFile(Path.Combine(OutputPath, $"{ProjectData.ProjectName}.pdb"), $"{ProjectData.ProjectName}.pdb");
-                    foreach (var v in ProjectData.ZipFiles)
-                    {
-                        var name = string.IsNullOrEmpty(v.Value) ? v.Key : v.Value;
-                        zip.CreateEntryFromFile(Path.Combine(OutputPath, v.Key), name);
-                    }
-                }
-                Console.WriteLine(
-                "SHA256(" + $"{ProjectData.ProjectName}.zip): " +
-                BitConverter.ToString(SHA256.HashData(File.ReadAllBytes(Path.Combine(OutputPath, $"{ProjectData.ProjectName}.zip"))))
-                .Replace("-", "").ToLower());
-            }
-            return true;
-        }
-    }
+    
 }
 

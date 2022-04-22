@@ -21,12 +21,21 @@ namespace HKToolUtils
             bool result = false;
             if (cmd.Equals("NewProject", StringComparison.OrdinalIgnoreCase) && args.Length == 3)
             {
+                var name = args[2];
+
                 using (var gitignoreS = new StreamReader(
                     Assembly.GetExecutingAssembly().GetManifestResourceStream("HKToolUtils.gitignoreTemplate.txt")))
                 {
                     File.WriteAllText(".gitignore", gitignoreS.ReadToEnd());
                 }
-                var name = args[2];
+                using (var ghwork = new StreamReader(
+                    Assembly.GetExecutingAssembly().GetManifestResourceStream("HKToolUtils.ghwork.yml")))
+                {
+                    Directory.CreateDirectory(".github/workflows");
+                    File.WriteAllText(".github/workflows/build.yml", 
+                        ghwork.ReadToEnd().Replace("{{ProjectName}}", name));
+                }
+                
                 var p = ModProjectFactory.CreateModProject(name, Path.GetFullPath(args[1]));
                 result = true;
                 //p.CreateMSProject();
