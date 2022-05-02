@@ -38,6 +38,12 @@ public partial class ModProjectManager
     }
     public static void IL_ReflectionHelperEx(MethodReference mr, MethodDefinition md, Instruction i)
     {
+        if(mr.Name == "GetSelf")
+        {
+            i.OpCode = OpCodes.Ldarg_0;
+            i.Operand = null;
+            return;
+        }
         var lastLdstr = i.Previous;
         if (lastLdstr.OpCode != OpCodes.Ldstr) return;
         var s = (string)lastLdstr.Operand;
